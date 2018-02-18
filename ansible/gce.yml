@@ -1,0 +1,139 @@
+---
+
+- name: Create instance
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - auth.yml
+    - config.yml
+  tasks:
+    - name: Create gentoo-devel-builder instance
+      gce:
+        instance_names: "{{ instance.name }}"
+        zone: "{{ zone }}"
+        machine_type: "{{ instance.type }}"
+        image_family: "{{ boot_disk.image_family }}"
+        external_projects: "{{ boot_disk.image_project }}"
+        state: present
+        disk_size: "{{ boot_disk.size }}"
+        persistent_boot_disk: True
+        preemptible: True
+        project_id: "{{ project_id }}"
+        service_account_email: "{{ service_account_email }}"
+        credentials_file: "{{ credentials_file }}"
+        metadata: '{"startup-script":"{{startup}}"}'
+        service_account_permissions:
+          - logging-write
+          - storage-rw
+      register: gce
+
+    - name: Save host data
+      add_host:
+        hostname: "{{ item.public_ip }}"
+        groupname: gce_instances_ips
+        ansible_ssh_private_key_file: ~/.ssh/google_compute_engine
+      with_items: "{{ gce.instance_data }}"
+
+    - name: Setup disks
+      gce_pd:
+        instance_name: "{{ builder }}"
+        zone: "{{ zone }}"
+        name: "{{ item.name }}"
+        disk_type: "{{ item.type }}"
+        size_gb: "{{ item.size }}"
+        project_id: "{{ project_id }}"
+        service_account_email: "{{ service_account_email }}"
+        credentials_file: "{{ credentials_file }}"
+        mode: READ_WRITE
+      with_items: "{{ disks }}"
+
+    - name: Wait for SSH for instances
+      wait_for:
+        delay: 1
+        host: "{{ item.public_ip }}"
+        port: 22
+        state: started
+        timeout: 30
+      with_items: "{{ gce.instance_data }}"
+
+- name: Setup instance
+  hosts: gce_instances_ips
+  gather_facts: false
+  become: yes
+  vars_files:
+    - auth.yml
+    - config.yml
+  tasks:
+    - name: Copy build scripts
+      synchronize:
+        src: "../{{ item }}"
+        dest: "{{ builder_dir }}"
+      with_items:
+        - bin
+        - bin-guest
+      tags:
+        - config
+    - name: Copy build-devel.service file
+      copy:
+        src: build-devel.service
+        dest: "{{ builder_dir }}"
+        mode: 0644
+    - name: link build-devel.service file
+      file:
+        src: "{{ builder_dir }}/build-devel.service"
+        dest: /etc/systemd/system/build-devel.service
+        state: link
+    - name: Copy docker config file
+      copy:
+        src: docker.conf
+        dest: "{{ builder_dir }}"
+        mode: 0644
+      notify: restart docker
+    - name: link docker config file
+      file:
+        src: "{{ builder_dir }}/docker.conf"
+        dest: /etc/default/docker
+        state: link
+      notify: restart docker
+    - name: Copy credential file
+      copy:
+        src: "{{ credentials_file }}"
+        dest: "{{ builder_dir }}/cred.json"
+        mode: 0400
+        force: no
+    - name: Ensure credential directory
+      file:
+        path: "/etc/google/auth/"
+        state: directory
+    - name: link credential file
+      file:
+        src: "{{ builder_dir }}/cred.json"
+        dest: "/etc/google/auth/application_default_credentials.json"
+        state: link
+
+    - name: Create a file system on devices
+      filesystem:
+        fstype: ext4
+        dev: "/dev/disk/by-id/google-{{ item.name }}"
+        opts: -E lazy_itable_init=0,lazy_journal_init=0,discard
+        resizefs: yes
+      with_items: "{{ disks }}"
+    - name: Generate /etc/fstab
+      mount:
+        src: "/dev/disk/by-id/google-{{ item.name }}"
+        path: "{{ item.dir }}"
+        fstype: ext4
+        opts: discard
+        state: mounted
+      with_items: "{{ disks }}"
+      notify: restart docker
+    - name: Backup /etc/fstab
+      copy:
+        src: /etc/fstab
+        dest: "{{ builder_dir }}/fstab"
+        remote_src: yes
+  handlers:
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted

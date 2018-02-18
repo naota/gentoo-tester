@@ -1,0 +1,9 @@
+[Unit]
+Description=Generate gentoo-devel image from the latest stage3 and portage
+Requires=network.target
+After=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /var/lib/builder/bin/update.sh
+WorkingDirectory=/var/lib/builder

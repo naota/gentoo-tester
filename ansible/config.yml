@@ -1,0 +1,27 @@
+zone: "us-central1-a"
+instance:
+  name: "gentoo-devel-builder"
+  type: "g1-small"
+boot_disk:
+  image_family: "cos-stable"
+  image_project: "cos-cloud"
+  size: 10
+builder_dir: "/var/lib/builder"
+startup: 'file={{ builder_dir }}/bin/startup.sh; [ -e ${file} ] && source ${file}'
+disks:
+  - name: docker
+    type: pd-ssd
+    size: 15
+    dir: /mnt/disks/docker
+  - name: ccache
+    type: pd-ssd
+    size: 5
+    dir: /mnt/disks/ccache
+  - name: distfiles
+    type: pd-standard
+    size: 5
+    dir: /mnt/disks/distfiles
+  - name: packages
+    type: pd-standard
+    size: 5
+    dir: /mnt/disks/packages
