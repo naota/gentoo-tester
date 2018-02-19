@@ -11,7 +11,7 @@ startup: 'file={{ builder_dir }}/bin/startup.sh; [ -e ${file} ] && source ${file
 disks:
   - name: docker
     type: pd-ssd
-    size: 15
+    size: 20
     dir: /mnt/disks/docker
   - name: ccache
     type: pd-ssd
