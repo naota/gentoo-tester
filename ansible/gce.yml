@@ -36,7 +36,7 @@
 
     - name: Setup disks
       gce_pd:
-        instance_name: "{{ builder }}"
+        instance_name: "{{ instance.name }}"
         zone: "{{ zone }}"
         name: "{{ item.name }}"
         disk_type: "{{ item.type }}"
