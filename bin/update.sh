@@ -2,41 +2,43 @@
 
 set -x
 
-NAME=gentoo-devel-updating
+: ${ORG:=}
+: ${DOCKER:=docker}
+NAME="gentoo-devel"
 PORTAGE=portagesnap
 TOOLS=/tools
 DATA_DIR=/mnt/disks
 BUILDER_DIR=/var/lib/builder
 
-clean_images() {
-    toclean=$(docker images -f "dangling=true" -q)
-    [ -n "${toclean}" ] && docker rmi ${toclean}
-}
-
-clean_images
-
-docker pull gentoo/portage &&
-    docker pull gentoo/stage3-amd64 || exit 1
-
-if [ -n "$(docker ps -qaf name=${NAME})" ]; then
-    if [ -n "$(docker ps -qf name=${NAME})" ]; then
-	docker kill ${NAME} || exit 1
-    fi
-    docker rm ${NAME} || exit 1
+if [ -n "${ORG}" ]; then
+    NAME="${ORG}/${NAME}"
 fi
-if [ "$(docker ps -af 'name=${PORTAGE}' --format='{{.Image}}')" != "gentoo/portage:latest" ]; then
-    if [ -n "$(docker ps -qaf name=${PORTAGE})" ]; then
-	docker rm ${PORTAGE} || exit 1
+
+UPDATING="gentoo-devel-updating"
+
+${DOCKER} image prune -f
+${DOCKER} pull gentoo/portage &&
+    ${DOCKER} pull gentoo/stage3-amd64 || exit 1
+
+if [ -n "$(${DOCKER} ps -qaf name=${UPDATING})" ]; then
+    if [ -n "$(${DOCKER} ps -qf name=${UPDATING})" ]; then
+	${DOCKER} kill ${UPDATING} || exit 1
     fi
-    clean_images
-    time docker create -v /usr/portage \
+    ${DOCKER} rm ${UPDATING} || exit 1
+fi
+if [ "$(${DOCKER} ps -af 'name=${PORTAGE}' --format='{{.Image}}')" != "gentoo/portage:latest" ]; then
+    if [ -n "$(${DOCKER} ps -qaf name=${PORTAGE})" ]; then
+	${DOCKER} rm ${PORTAGE} || exit 1
+    fi
+    ${DOCKER} image prune -f
+    time ${DOCKER} create -v /usr/portage \
 	 --name ${PORTAGE} gentoo/portage:latest /bin/true \
 	|| exit 1
 fi
 
-docker images
+${DOCKER} images
 
-time docker run --name ${NAME} \
+time ${DOCKER} run --name ${UPDATING} \
      --log-driver=gcplogs \
      --volumes-from=${PORTAGE} \
      -v ${BUILDER_DIR}/bin-guest:${TOOLS}:ro \
@@ -45,12 +47,18 @@ time docker run --name ${NAME} \
      -v ${DATA_DIR}/packages:/usr/portage/packages \
      gentoo/stage3-amd64:latest \
      ${TOOLS}/build-devel.sh \
-    && docker commit ${NAME} gentoo-devel:latest \
-    && docker rm ${NAME}
+    && ${DOCKER} commit ${UPDATING} ${NAME}:latest \
+    && ${DOCKER} rm ${UPDATING}
 
-clean_images
-docker ps -a
-docker images
+built=$?
+if [ $built = 0 -a -n "${ORG}" ]; then
+    ${DOCKER} push ${NAME}:latest &&
+	${DOCKER} rmi ${NAME}:latest
+fi
+
+${DOCKER} image prune -f
+${DOCKER} ps -a
+${DOCKER} images
 
 sync; sync
 sudo shutdown -h now

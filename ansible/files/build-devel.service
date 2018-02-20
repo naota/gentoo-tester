@@ -4,6 +4,7 @@ Requires=network.target
 After=local-fs.target
 
 [Service]
+EnvironmentFile=-/var/lib/builder/env
 Type=simple
 ExecStart=/bin/bash /var/lib/builder/bin/update.sh
 WorkingDirectory=/var/lib/builder
