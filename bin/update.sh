@@ -25,13 +25,12 @@ if [ -n "$(${DOCKER} ps -qaf name=${UPDATING})" ]; then
     if [ -n "$(${DOCKER} ps -qf name=${UPDATING})" ]; then
 	${DOCKER} kill ${UPDATING} || exit 1
     fi
-    ${DOCKER} rm ${UPDATING} || exit 1
+    ${DOCKER} rm -v ${UPDATING} || exit 1
 fi
 if [ "$(${DOCKER} ps -af "name=${PORTAGE}" --format='{{.Image}}')" != "gentoo/portage:latest" ]; then
     if [ -n "$(${DOCKER} ps -qaf name=${PORTAGE})" ]; then
-	${DOCKER} rm ${PORTAGE} || exit 1
+	${DOCKER} rm -v ${PORTAGE} || exit 1
     fi
-    ${DOCKER} volume prune -f
     time ${DOCKER} create -v /usr/portage \
 	 --name ${PORTAGE} gentoo/portage:latest /bin/true \
 	|| exit 1
@@ -49,7 +48,7 @@ time ${DOCKER} run --name ${UPDATING} \
      gentoo/stage3-amd64:latest \
      ${TOOLS}/build-devel.sh \
     && ${DOCKER} commit ${UPDATING} ${NAME}:latest \
-    && ${DOCKER} rm ${UPDATING}
+    && ${DOCKER} rm -v ${UPDATING}
 
 built=$?
 if [ $built = 0 -a -n "${ORG}" ]; then
