@@ -19,6 +19,7 @@ UPDATING="gentoo-devel-updating"
 ${DOCKER} image prune -f
 ${DOCKER} pull gentoo/portage &&
     ${DOCKER} pull gentoo/stage3-amd64 || exit 1
+${DOCKER} image prune -f
 
 if [ -n "$(${DOCKER} ps -qaf name=${UPDATING})" ]; then
     if [ -n "$(${DOCKER} ps -qf name=${UPDATING})" ]; then
@@ -30,7 +31,7 @@ if [ "$(${DOCKER} ps -af "name=${PORTAGE}" --format='{{.Image}}')" != "gentoo/po
     if [ -n "$(${DOCKER} ps -qaf name=${PORTAGE})" ]; then
 	${DOCKER} rm ${PORTAGE} || exit 1
     fi
-    ${DOCKER} image prune -f
+    ${DOCKER} volume prune -f
     time ${DOCKER} create -v /usr/portage \
 	 --name ${PORTAGE} gentoo/portage:latest /bin/true \
 	|| exit 1
