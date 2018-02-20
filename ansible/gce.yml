@@ -34,6 +34,15 @@
         ansible_ssh_private_key_file: ~/.ssh/google_compute_engine
       with_items: "{{ gce.instance_data }}"
 
+    - name: Start gentoo-devel-builder instance
+      gce:
+        instance_names: "{{ instance.name }}"
+        zone: "{{ zone }}"
+        project_id: "{{ project_id }}"
+        service_account_email: "{{ service_account_email }}"
+        credentials_file: "{{ credentials_file }}"
+        state: started
+
     - name: Setup disks
       gce_pd:
         instance_name: "{{ instance.name }}"
