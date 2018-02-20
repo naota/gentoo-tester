@@ -23,6 +23,7 @@ echo 'ACCEPT_KEYWORDS="~amd64 amd64"' >> /etc/portage/make.conf &&
 	echo 'FEATURES="ccache parallel-install -sandbox -usersandbox"' >> /etc/portage/make.conf &&
 	eselect news read new > /dev/null &&
 	emerge ${EMERGE_OPTS} flaggie ccache &&
+	flaggie +bindist &&
 	flaggie sys-apps/portage +gentoo-dev &&
 	emerge --info -v > /emerge-info.txt &&
 	emerge -uDNv --with-bdeps=y ${EMERGE_OPTS} world &&
