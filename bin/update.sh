@@ -26,7 +26,7 @@ if [ -n "$(${DOCKER} ps -qaf name=${UPDATING})" ]; then
     fi
     ${DOCKER} rm ${UPDATING} || exit 1
 fi
-if [ "$(${DOCKER} ps -af 'name=${PORTAGE}' --format='{{.Image}}')" != "gentoo/portage:latest" ]; then
+if [ "$(${DOCKER} ps -af "name=${PORTAGE}" --format='{{.Image}}')" != "gentoo/portage:latest" ]; then
     if [ -n "$(${DOCKER} ps -qaf name=${PORTAGE})" ]; then
 	${DOCKER} rm ${PORTAGE} || exit 1
     fi
