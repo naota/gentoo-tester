@@ -20,7 +20,7 @@ export MAKEOPTS="-j$(nproc) -l$(nproc)"
 EMERGE_OPTS="-j --load-average $(nproc) -bk --binpkg-respect-use=y"
 echo 'ACCEPT_KEYWORDS="~amd64 amd64"' >> /etc/portage/make.conf &&
 	echo 'CCACHE_DIR="/var/cache/ccache"' >> /etc/portage/make.conf &&
-	echo 'FEATURES="ccache parallel-install -sandbox -usersandbox"' >> /etc/portage/make.conf &&
+	echo 'FEATURES="binpkg-multi-instance ccache parallel-install -sandbox -usersandbox"' >> /etc/portage/make.conf &&
 	eselect news read new > /dev/null &&
 	emerge ${EMERGE_OPTS} flaggie ccache &&
 	flaggie +bindist &&
