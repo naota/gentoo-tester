@@ -1,7 +1,7 @@
 zone: "us-central1-a"
 instance:
   name: "gentoo-devel-builder"
-  type: "g1-small"
+  type: "n1-standard-16"
 boot_disk:
   image_family: "cos-stable"
   image_project: "cos-cloud"
