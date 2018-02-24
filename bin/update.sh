@@ -40,6 +40,7 @@ ${DOCKER} images
 
 time ${DOCKER} run --name ${UPDATING} \
      --log-driver=gcplogs \
+     -v /dev/shm --tmpfs /dev/shm:rw,suid,dev,exec,size=10g \
      --volumes-from=${PORTAGE} \
      -v ${BUILDER_DIR}/bin-guest:${TOOLS}:ro \
      -v ${DATA_DIR}/ccache:/var/cache/ccache \

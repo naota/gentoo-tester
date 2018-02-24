@@ -17,13 +17,16 @@ en_US.UTF-8 UTF-8
 EOF
 
 export MAKEOPTS="-j$(nproc) -l$(nproc)"
-EMERGE_OPTS="-j --load-average $(nproc) -bk --binpkg-respect-use=y"
+export PORTAGE_TMPDIR=/dev/shm
+EMERGE_OPTS="-j --load-average $(nproc) -bk --binpkg-respect-use=y --buildpkg-exclude virtual/*"
 echo 'ACCEPT_KEYWORDS="~amd64 amd64"' >> /etc/portage/make.conf &&
 	echo 'CCACHE_DIR="/var/cache/ccache"' >> /etc/portage/make.conf &&
-	echo 'FEATURES="binpkg-multi-instance ccache parallel-install -sandbox -usersandbox"' >> /etc/portage/make.conf &&
+	echo 'FEATURES="${FEATURES} buildpkg binpkg-multi-instance"' >> /etc/portage/make.conf &&
+	echo 'FEATURES="${FEATURES} ccache parallel-install -news -sandbox -usersandbox"' >> /etc/portage/make.conf &&
+	echo 'USE="bindist"' >> /etc/portage/make.conf &&
+	echo 'BINPKG_COMPRESS=xz' >> /etc/portage/make.conf &&
 	eselect news read new > /dev/null &&
 	emerge ${EMERGE_OPTS} flaggie ccache &&
-	flaggie +bindist &&
 	flaggie sys-apps/portage +gentoo-dev &&
 	emerge --info -v > /emerge-info.txt &&
 	emerge -uDNv --with-bdeps=y ${EMERGE_OPTS} world &&
