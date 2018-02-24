@@ -62,7 +62,7 @@
         host: "{{ item.public_ip }}"
         port: 22
         state: started
-        timeout: 90
+        timeout: 30
       with_items: "{{ gce.instance_data }}"
 
 - name: Setup instance
