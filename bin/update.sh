@@ -10,16 +10,21 @@ TOOLS=/tools
 DATA_DIR=/mnt/disks
 BUILDER_DIR=/var/lib/builder
 
+clean_images() {
+    toclean=$(docker images -f "dangling=true" -q)
+    [ -n "${toclean}" ] && docker rmi ${toclean}
+}
+
 if [ -n "${ORG}" ]; then
     NAME="${ORG}/${NAME}"
 fi
 
 UPDATING="gentoo-devel-updating"
 
-${DOCKER} image prune -f
+clean_images
 ${DOCKER} pull gentoo/portage &&
     ${DOCKER} pull gentoo/stage3-amd64 || exit 1
-${DOCKER} image prune -f
+clean_images
 
 if [ -n "$(${DOCKER} ps -qaf name=${UPDATING})" ]; then
     if [ -n "$(${DOCKER} ps -qf name=${UPDATING})" ]; then
@@ -57,7 +62,7 @@ if [ $built = 0 -a -n "${ORG}" ]; then
 	${DOCKER} rmi ${NAME}:latest
 fi
 
-${DOCKER} image prune -f
+clean_images
 ${DOCKER} ps -a
 ${DOCKER} images
 
