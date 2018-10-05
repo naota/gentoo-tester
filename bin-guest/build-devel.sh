@@ -23,7 +23,6 @@ echo 'ACCEPT_KEYWORDS="~amd64 amd64"' >> /etc/portage/make.conf &&
 	echo 'CCACHE_DIR="/var/cache/ccache"' >> /etc/portage/make.conf &&
 	echo 'FEATURES="${FEATURES} buildpkg binpkg-multi-instance"' >> /etc/portage/make.conf &&
 	echo 'FEATURES="${FEATURES} ccache parallel-install -news -sandbox -usersandbox"' >> /etc/portage/make.conf &&
-	echo 'USE="bindist"' >> /etc/portage/make.conf &&
 	echo 'BINPKG_COMPRESS=xz' >> /etc/portage/make.conf &&
 	eselect news read new > /dev/null &&
 	emerge ${EMERGE_OPTS} flaggie ccache &&
