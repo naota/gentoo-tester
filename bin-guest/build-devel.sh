@@ -2,7 +2,7 @@
 
 set -x
 
-LANG=en_US.utf8
+export LANG=en_US.utf8
 
 cat >/etc/portage/bashrc <<EOF
 if [[ \${FEATURES} == *ccache* && \${EBUILD_PHASE_FUNC} == src_* ]]; then
